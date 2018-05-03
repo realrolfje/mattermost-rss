@@ -5,7 +5,7 @@
 # Configuration in newsfeed.config looks like:
 #
 # {
-#    "webhook": "https://mattermost.pi9noz.ampr.org/hooks/4ajjzwsdkjb7uewk7w7qn4a4cy",
+#    "webhook": "https://your.mattermost.org/hooks/4adfsdferedsfoiuoj3ny",
 #    "feeds": [
 #        { "feedurl": "https://feeds.agentschaptelecom.nl/nieuws.rss" },
 #        {
