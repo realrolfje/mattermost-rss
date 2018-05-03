@@ -2,21 +2,7 @@
 #
 # Scans RSS feeds and sends them to the given mattermost webhook.
 #
-# Configuration in newsfeed.config looks like:
-#
-# {
-#    "webhook": "https://your.mattermost.org/hooks/4adfsdferedsfoiuoj3ny",
-#    "feeds": [
-#        { "feedurl": "https://feeds.agentschaptelecom.nl/nieuws.rss" },
-#        {
-#            "feedurl": "https://www.rijnmond.nl/rss",
-#            "filter": ["radioamateur", "zendamateur", "antenne"]
-#        },
-# }
-#
-# The "filter" attribute is optional. If it is present, only posts in the
-# rss feed containing the filter words will be posted. If the filter is not
-# present, all entries will be posted.
+# See newsfeed.config for comments and how to configure.
 #
 # Ids of posts which have already been posted are stored in files with
 # the same name as the hostname, with extension "ids".
