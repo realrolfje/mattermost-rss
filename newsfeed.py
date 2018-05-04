@@ -92,7 +92,7 @@ def getrssentry(feedurl, oldpostids, filter):
     return None
 
 
-def postrssentry(username, entry):
+def postrssentry(mattermosturl, username, entry):
     """
         Posts the entry to mattermost. Returns True if posted
         succesfuly, or False if not.
@@ -104,8 +104,6 @@ def postrssentry(username, entry):
         + entry.summary.encode('utf-8')
     }
 
-    # print payload
-    # return False
     try:
         resp = requests.post(mattermosturl, data=json.dumps(payload))
         return (resp.status_code == 200)
@@ -119,6 +117,12 @@ def removehtml(summary):
     stripped = re.sub('<[^<]+?>', '', stripped)
     return stripped
 
+def topdomain(hostname):
+    while hostname.count('.') > 1:
+        # Matches characters up to the first "."
+        hostname = re.sub(r'^(.+?)\.', '', hostname)
+    
+    return hostname
 
 def writeconfig(config):
     """Writes the config to json file"""
@@ -159,16 +163,14 @@ if __name__ == "__main__":
         postids = readoldpostids(idfile)
 
         entry = getrssentry(feedurl, postids, filter)
+        username = topdomain(urlparse(feedurl).hostname)
 
-        username = urlparse(feedurl).hostname
-        username = re.sub('(^www\\.)|(^feeds\\.)|(^zoek\\.)', '', username)
-
-        if mattermosturl is None:
+        if 'webhook' not in config:
             # Print the entry and skip actual posting.
             print entry
             continue
 
-        if entry is not None and postrssentry(username, entry):
+        if entry is not None and postrssentry(config['webhook'], username, entry):
             postids = postids + [entry.id]
             writeoldpostids(idfile, postids)
         else:
