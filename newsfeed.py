@@ -193,8 +193,8 @@ if __name__ == "__main__":
             continue
 
         if postrssentry(config['webhook'], feed['username'], entry):
-            postids = postids + [entry.id]
-            writeoldpostids(idfile, postids)
+            oldpostids = oldpostids + [entry.id]
+            writeoldpostids(idfile, oldpostids)
         else:
             print "Failed to post entry:"
             print entry
