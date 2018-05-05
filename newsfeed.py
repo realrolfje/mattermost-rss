@@ -39,7 +39,7 @@ def readoldpostids(idfile):
         postids = json.loads(text_file.read())
         text_file.close()
     except IOError:
-        print "no ids file, start with empty list."
+        print "no ids file " + idfile + " , start with empty list."
         postids = []
     return postids
 
@@ -209,16 +209,20 @@ if __name__ == "__main__":
         entries = getnewrssentries(feed['feedurl'], oldpostids)
         entries = filterrssentries(entries, feed['include'], feed['exclude'])
 
-        entry = entries[0]
+        if len(entries) > 0:
+            entry = entries[0]
+        else:
+            print "No new entry."
+            continue
 
         if 'webhook' not in config:
             # Print the entry and skip actual posting.
-            print "No webhook defined. The following entry would have been posted as '" + feed['username'] + "' :"
-            print entry
+            print "No webhook defined. Would have posted '" + entry.title + "' as '" + feed['username'] + "'."
             continue
 
-        if entry is not None and postrssentry(config['webhook'], feed['username'], entry):
+        if postrssentry(config['webhook'], feed['username'], entry):
             postids = postids + [entry.id]
             writeoldpostids(idfile, postids)
         else:
-            print "No new entry."
+            print "Failed to post entry:"
+            print entry
