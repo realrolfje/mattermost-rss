@@ -182,7 +182,17 @@ def readconfig():
 
         cleanconfig = "".join(content)
 
-    return json.loads(cleanconfig)
+    config = json.loads(cleanconfig)
+
+    # Cleanup and defaults so we have a valid configuration
+    for feed in config['feeds']:
+        if 'username' not in feed:
+            feed['username'] = topdomain(urlparse(feed['feedurl']).hostname)
+
+        if 'include' not in feed: feed['include'] = None
+        if 'exclude' not in feed: feed['exclude'] = None
+
+    return config
 
 
 if __name__ == "__main__":
@@ -191,42 +201,23 @@ if __name__ == "__main__":
 
     config = readconfig()
 
-    if 'webhook' in config:
-        mattermosturl = config['webhook']
-    else:
-        mattermosturl = None
-
     for feed in config['feeds']:
-        feedurl = feed['feedurl']
 
-        if 'username' in feed:
-            username = feed['username']
-        else:
-            username = topdomain(urlparse(feedurl).hostname)
-
-        includewords = None
-        if 'include' in feed:
-            includewords = feed['include']
-
-        excludewords = None
-        if 'exclude' in feed:
-            excludewords = feed['exclude']
-
-        idfile = mydirectory + "/" + urlparse(feedurl).hostname + ".ids"
+        idfile = mydirectory + "/" + urlparse(feed['feedurl']).hostname + ".ids"
         oldpostids = readoldpostids(idfile)
 
-        entries = getnewrssentries(feedurl, oldpostids)
-        entries = filterrssentries(entries, includewords, excludewords)
+        entries = getnewrssentries(feed['feedurl'], oldpostids)
+        entries = filterrssentries(entries, feed['include'], feed['exclude'])
 
         entry = entries[0]
 
         if 'webhook' not in config:
             # Print the entry and skip actual posting.
-            print "No webhook defined. The following entry would have been posted as '" + username + "' :"
+            print "No webhook defined. The following entry would have been posted as '" + feed['username'] + "' :"
             print entry
             continue
 
-        if entry is not None and postrssentry(config['webhook'], username, entry):
+        if entry is not None and postrssentry(config['webhook'], feed['username'], entry):
             postids = postids + [entry.id]
             writeoldpostids(idfile, postids)
         else:
