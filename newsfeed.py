@@ -64,34 +64,6 @@ def containsanyword(filter, entry):
     return False
 
 
-def getrssentry(feedurl, oldpostids, filter):
-    """
-        Loads rss entries from feedurl, and returns
-        the one feed that is not in postids
-    """
-
-    socket.setdefaulttimeout(120)
-
-    # Load the rss feed
-    print "Loading: " + feedurl
-    rssentries = feedparser.parse(feedurl).entries
-
-    # Find the oldest post that is new to us.
-    for entry in rssentries:
-
-        if 'id' not in entry:
-            # No id, generating hash based on link url.
-            entry.id = abs(hash(entry.link)) % (10 ** 8)
-
-        # Not posted earlier and contains the right words?
-        if entry.id not in postids and containsanyword(filter, entry):
-            entry.summary = removehtml(entry.summary)
-            return entry
-
-    # No new entry found, return none.
-    return None
-
-
 def getnewrssentries(feedurl, oldpostids):
     """
         Loads rss entries from feedurl, and returns
