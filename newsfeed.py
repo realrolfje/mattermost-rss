@@ -32,15 +32,15 @@ def readoldpostids(idfile):
     """
         Loads already processed ids from file.
     """
-
-    # load ids already parsed
     try:
         text_file = open(idfile, "r")
         postids = json.loads(text_file.read())
         text_file.close()
     except IOError:
-        print "no ids file " + idfile + " , start with empty list."
+        print "No ids file " + idfile + " , start with empty list."
         postids = []
+        writeoldpostids(idfile, postids)
+
     return postids
 
 
@@ -48,9 +48,13 @@ def writeoldpostids(idfile, postids):
     """
         Writes processed ids to file
     """
-    text_file = open(idfile, "w")
-    text_file.write(json.dumps(postids))
-    text_file.close()
+    try:
+        text_file = open(idfile, "w")
+        text_file.write(json.dumps(postids))
+        text_file.close()
+    except IOError as e:
+        print "ERROR: Can not write " + idfile + "."
+        print e
 
 
 def containsanyword(filter, entry):
@@ -184,7 +188,7 @@ if __name__ == "__main__":
         if len(entries) > 0:
             entry = entries[0]
         else:
-            print "No new entry."
+            print "No new entry for " + feed['feedurl'] + "."
             continue
 
         if 'webhook' not in config:
