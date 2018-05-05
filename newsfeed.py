@@ -199,6 +199,11 @@ if __name__ == "__main__":
     for feed in config['feeds']:
         feedurl = feed['feedurl']
 
+        if 'username' in feed:
+            username = feed['username']
+        else:
+            username = topdomain(urlparse(feedurl).hostname)
+
         includewords = None
         if 'include' in feed:
             includewords = feed['include']
@@ -212,13 +217,12 @@ if __name__ == "__main__":
 
         entries = getnewrssentries(feedurl, oldpostids)
         entries = filterrssentries(entries, includewords, excludewords)
-        entry = entries[0]
 
-        username = topdomain(urlparse(feedurl).hostname)
+        entry = entries[0]
 
         if 'webhook' not in config:
             # Print the entry and skip actual posting.
-            print "No webhook defined. The following entry would have been posted:"
+            print "No webhook defined. The following entry would have been posted as '" + username + "' :"
             print entry
             continue
 
