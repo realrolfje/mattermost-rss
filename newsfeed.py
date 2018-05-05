@@ -92,6 +92,47 @@ def getrssentry(feedurl, oldpostids, filter):
     return None
 
 
+def getnewrssentries(feedurl, oldpostids):
+    """
+        Loads rss entries from feedurl, and returns
+        the one feed that is not in postids
+    """
+    socket.setdefaulttimeout(120)
+    rssentries = feedparser.parse(feedurl).entries
+    newentries = []
+
+    # Find the oldest post that is new to us.
+    for entry in rssentries:
+
+        if 'id' not in entry:
+            # No id, generating hash based on link url.
+            entry.id = abs(hash(entry.link)) % (10 ** 8)
+
+        # Not posted earlier and contains the right words?
+        if entry.id not in oldpostids:
+            newentries += [entry]
+
+    return newentries
+
+
+def filterrssentries(entries, include, exclude):
+    """
+        Returns a new set of entries, only those that
+        contain the words in the "include" array and
+        do not contain the words in the "exclude" array.
+    """
+    filtered = []
+    for entry in entries:
+        if (
+            (include is None or containsanyword(include, entry))
+            and not
+            (exclude is not None and containsanyword(exclude, entry))
+        ):
+            filtered += {entry}
+
+    return filtered
+
+
 def postrssentry(mattermosturl, username, entry):
     """
         Posts the entry to mattermost. Returns True if posted
@@ -117,12 +158,14 @@ def removehtml(summary):
     stripped = re.sub('<[^<]+?>', '', stripped)
     return stripped
 
+
 def topdomain(hostname):
     while hostname.count('.') > 1:
         # Matches characters up to the first "."
         hostname = re.sub(r'^(.+?)\.', '', hostname)
-    
+
     return hostname
+
 
 def writeconfig(config):
     """Writes the config to json file"""
@@ -135,10 +178,10 @@ def readconfig():
     cleanconfig = ""
     with open(myconfig) as f:
         content = f.readlines()
-        content = [re.sub('#.*', '', x) for x in content] 
+        content = [re.sub('#.*', '', x) for x in content]
 
         cleanconfig = "".join(content)
-    
+
     return json.loads(cleanconfig)
 
 
@@ -155,18 +198,27 @@ if __name__ == "__main__":
 
     for feed in config['feeds']:
         feedurl = feed['feedurl']
-        filter = None
-        if 'filter' in feed:
-            filter = feed['filter']
+
+        includewords = None
+        if 'include' in feed:
+            includewords = feed['include']
+
+        excludewords = None
+        if 'exclude' in feed:
+            excludewords = feed['exclude']
 
         idfile = mydirectory + "/" + urlparse(feedurl).hostname + ".ids"
-        postids = readoldpostids(idfile)
+        oldpostids = readoldpostids(idfile)
 
-        entry = getrssentry(feedurl, postids, filter)
+        entries = getnewrssentries(feedurl, oldpostids)
+        entries = filterrssentries(entries, includewords, excludewords)
+        entry = entries[0]
+
         username = topdomain(urlparse(feedurl).hostname)
 
         if 'webhook' not in config:
             # Print the entry and skip actual posting.
+            print "No webhook defined. The following entry would have been posted:"
             print entry
             continue
 
