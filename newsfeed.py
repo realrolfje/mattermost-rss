@@ -104,6 +104,7 @@ def filterrssentries(entries, include, exclude):
             and not
             (exclude is not None and containsanyword(exclude, entry))
         ):
+            entry.summary = removehtml(entry.summary)
             filtered += {entry}
 
     return filtered
