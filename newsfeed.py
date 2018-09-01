@@ -22,7 +22,7 @@ import os
 import sys
 import re
 import json
-from urlparse import urlparse
+from urlparse import urlparse, parse_qs
 
 mydirectory = os.path.dirname(os.path.realpath(__file__))
 myconfig = mydirectory + "/newsfeed.config"
@@ -109,18 +109,36 @@ def filterrssentries(entries, include, exclude):
 
     return filtered
 
+def buildmattermostpayload(username, entry):
+    """
+        Transforms the rss entry into a payload which
+        can be sent to mattermost. Payload will be
+        different depending on the contents of the entry
+        so that it will be correctly rendered by
+        mattermost.
+    """
+    if 'twitter_place' in entry:
+        # Support for entries from https://twitrss.me
+        return {
+            'username': username,
+            'text': "[tweet:]("
+            + entry.link.encode('utf-8') + ") "
+            + entry.title.encode('utf-8')
+        }
+    else:
+        return {
+            'username': username,
+            'text': "[" + entry.title.encode('utf-8') + "]("
+            + entry.link.encode('utf-8') + ") "
+            + entry.summary.encode('utf-8')
+        }
 
 def postrssentry(mattermosturl, username, entry):
     """
         Posts the entry to mattermost. Returns True if posted
         succesfuly, or False if not.
     """
-    payload = {
-        'username': username,
-        'text': "[" + entry.title.encode('utf-8') + "]("
-        + entry.link.encode('utf-8') + ") "
-        + entry.summary.encode('utf-8')
-    }
+    payload = buildmattermostpayload(username, entry)
 
     try:
         resp = requests.post(mattermosturl, data=json.dumps(payload))
@@ -171,6 +189,16 @@ def readconfig():
 
     return config
 
+def idfilefromurl(url):
+    parsedurl = urlparse(url)
+    query = parse_qs(parsedurl.query, keep_blank_values=True)
+
+    if parsedurl.hostname == 'twitrss.me':
+        idfile = mydirectory + "/" + parsedurl.hostname + "." + query['user'][0]+ ".ids"
+    else:
+        idfile = mydirectory + "/" + parsedurl.hostname + ".ids"
+    return idfile
+
 
 if __name__ == "__main__":
     # Raw, no checking. Ugly errors when you don't use this script
@@ -180,7 +208,7 @@ if __name__ == "__main__":
 
     for feed in config['feeds']:
 
-        idfile = mydirectory + "/" + urlparse(feed['feedurl']).hostname + ".ids"
+        idfile = idfilefromurl(feed['feedurl'])
         oldpostids = readoldpostids(idfile)
 
         entries = getnewrssentries(feed['feedurl'], oldpostids)
