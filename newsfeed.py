@@ -239,14 +239,14 @@ if __name__ == "__main__":
         for webhook in webhooks:
             if (feed['post'] == "False"):
                 print "Not posting entry: " + entry.title
-                oldpostids = oldpostids + [entry.id]
                 posted = True
             elif postrssentry(webhook, feed['username'], entry):
-                oldpostids = oldpostids + [entry.id]
                 posted = True
             else:
                 print "Failed to post entry:"
                 print entry
-        
-        if posted:
-            writeoldpostids(idfile, oldpostids)
+                continue
+
+            if posted and entry.id not in oldpostids:
+                oldpostids = oldpostids + [entry.id]
+                writeoldpostids(idfile, oldpostids)
