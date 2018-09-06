@@ -234,14 +234,19 @@ if __name__ == "__main__":
         if not isinstance(webhooks, list):
             webhooks = [webhooks]
 
+        posted = False
+
         for webhook in webhooks:
             if (feed['post'] == "False"):
                 print "Not posting entry: " + entry.title
                 oldpostids = oldpostids + [entry.id]
-                writeoldpostids(idfile, oldpostids)
+                posted = True
             elif postrssentry(webhook, feed['username'], entry):
                 oldpostids = oldpostids + [entry.id]
-                writeoldpostids(idfile, oldpostids)
+                posted = True
             else:
                 print "Failed to post entry:"
                 print entry
+        
+        if posted:
+            writeoldpostids(idfile, oldpostids)
