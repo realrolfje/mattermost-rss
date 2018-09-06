@@ -220,14 +220,24 @@ if __name__ == "__main__":
             print "No new entry for " + feed['feedurl'] + "."
             continue
 
-        if 'webhook' not in config:
+        # Support for global and local webhooks
+        if 'webhook' in feed:
+            webhooks = feed['webhook']
+        elif 'webhook' in config:
+            webhooks = config['webhook']
+        else:
             # Print the entry and skip actual posting.
             print "No webhook defined. Would have posted '" + entry.title + "' as '" + feed['username'] + "'."
             continue
 
-        if postrssentry(config['webhook'], feed['username'], entry):
-            oldpostids = oldpostids + [entry.id]
-            writeoldpostids(idfile, oldpostids)
-        else:
-            print "Failed to post entry:"
-            print entry
+        # Support for multiple webhooks in an array.
+        if not isinstance(webhooks, list):
+            webhooks = [webhooks]
+
+        for webhook in webhooks:
+            if postrssentry(webhook, feed['username'], entry):
+                oldpostids = oldpostids + [entry.id]
+                writeoldpostids(idfile, oldpostids)
+            else:
+                print "Failed to post entry:"
+                print entry
