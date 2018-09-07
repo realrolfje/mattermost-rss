@@ -22,6 +22,7 @@ import os
 import sys
 import re
 import json
+import time
 from urlparse import urlparse, parse_qs
 
 mydirectory = os.path.dirname(os.path.realpath(__file__))
@@ -201,9 +202,10 @@ def idfilefromurl(url):
 
 
 if __name__ == "__main__":
+    start = time.time()
+
     # Raw, no checking. Ugly errors when you don't use this script
     # in the form: newsfeed.py <rss link> <mattermost webhook url>
-
     config = readconfig()
 
     for feed in config['feeds']:
@@ -221,6 +223,7 @@ if __name__ == "__main__":
             continue
 
         # Support for global and local webhooks
+        webhooks=[]
         if 'webhook' in feed:
             webhooks = feed['webhook']
         elif 'webhook' in config:
@@ -245,8 +248,14 @@ if __name__ == "__main__":
             else:
                 print "Failed to post entry:"
                 print entry
-                continue
+                posted = False
 
             if posted and entry.id not in oldpostids:
                 oldpostids = oldpostids + [entry.id]
                 writeoldpostids(idfile, oldpostids)
+
+    end = time.time()
+    elapsed = str(round(end - start, 1))
+    print "Total time: " + elapsed + " seconds."
+
+
