@@ -240,7 +240,7 @@ if __name__ == "__main__":
         posted = False
 
         for webhook in webhooks:
-            if (feed['post'] == "False"):
+            if 'post' in feed and feed['post'] == "False":
                 print "Not posting entry: " + entry.title
                 posted = True
             elif postrssentry(webhook, feed['username'], entry):
